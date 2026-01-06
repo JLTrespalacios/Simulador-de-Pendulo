@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACA — Calculadora Einstein Interactiva</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjs@11/lib/browser/math.js"></script>
+<style>
+:root{
+ --bg:#0b1220; --card:#0c1628; --border:#1f2937;
+ --accent:#22d3ee; --text:#e5e7eb; --ok:#34d399; --err:#ef4444;
+}
+body{
+ margin:0;font-family:"Inter",system-ui,sans-serif;
+ background:radial-gradient(120% 120% at 10% -10%,#0a1022,#0b1220 60%);
+ color:var(--text);display:flex;flex-direction:column;align-items:center;min-height:100vh;
+}
+header{
+ width:100%;background:rgba(7,12,24,.7);backdrop-filter:blur(6px);
+ border-bottom:1px solid var(--border);padding:18px;
+ display:flex;justify-content:space-between;align-items:center;
+}
+h1{font-size:20px;margin:0;color:var(--accent);}
+.badge{border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-size:12px}
+main{max-width:960px;width:100%;padding:18px;display:grid;gap:18px;grid-template-columns:1fr 1fr;}
+@media(max-width:1000px){main{grid-template-columns:1fr;}}
+.card{
+ background:linear-gradient(180deg,var(--card),#0a1222 60%);
+ border:1px solid var(--border);border-radius:18px;
+ box-shadow:0 10px 30px rgba(0,0,0,.35);overflow:hidden;
+}
+.card h2{margin:0;padding:14px 18px;border-bottom:1px solid var(--border);}
+.section{padding:16px 18px;}
+input{
+ width:100%;padding:14px;border-radius:12px;border:1px solid var(--border);
+ background:#0a1220;color:var(--text);font-size:18px;text-align:right;
+}
+button{
+ background:#0c1628;border:1px solid var(--border);color:var(--text);
+ border-radius:10px;padding:12px;font-size:16px;cursor:pointer;transition:.2s;
+}
+button:hover{background:#11233b;}
+button.op{color:var(--accent);}
+button.eq{background:var(--accent);color:black;font-weight:bold;}
+.grid-btns{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px;}
+.display{font-size:22px;margin-bottom:8px;text-align:right;}
+.msg{background:#0a1220;border:1px solid var(--border);border-radius:10px;padding:10px;color:#d1fae5;}
+.table-wrap{max-height:250px;overflow:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;text-align:center;}
+th,td{border-bottom:1px solid var(--border);padding:6px;}
+th{color:#9ca3af;}
+.einstein{
+ width:180px;height:180px;border-radius:50%;overflow:hidden;
+ box-shadow:0 0 25px #22d3ee;
+ animation:pulse 2.5s infinite ease-in-out;
+}
+@keyframes pulse{
+ 0%,100%{box-shadow:0 0 20px #22d3ee;}
+ 50%{box-shadow:0 0 40px #38bdf8;}
+}
+</style>
+</head>
+<body>
+<header>
+ <h1>ACA FINAL — Calculadora Einstein</h1>
+ <span class="badge">José Leonardo Trespalacios Bedoya</span>
+</header>
+
+<main>
+<!-- Einstein panel -->
+<section class="card">
+ <h2>Einstein dice 🧠</h2>
+ <div class="section" style="text-align:center;">
+   <img src="einstein.png" alt="Einstein" class="einstein">
+   <div id="msg" class="msg" style="margin-top:12px;">
+     ¡Hola! Soy <b>Einstein</b>. Escribe con el teclado o usa los botones para calcular.
+   </div>
+ </div>
+</section>
+
+<!-- Calculadora -->
+<section class="card">
+ <h2>Panel de cálculo</h2>
+ <div class="section">
+   <input id="display" placeholder="0" readonly>
+   <div class="grid-btns">
+     <button>(</button><button>)</button><button>π</button><button>e</button><button id="clear">C</button>
+     <button>7</button><button>8</button><button>9</button><button class="op">/</button><button class="op">^</button>
+     <button>4</button><button>5</button><button>6</button><button class="op">*</button><button class="op">√</button>
+     <button>1</button><button>2</button><button>3</button><button class="op">-</button><button>sin</button>
+     <button>0</button><button>.</button><button class="eq">=</button><button class="op">+</button><button>cos</button>
+     <button>tan</button><button>log</button><button>ln</button><button>abs</button><button id="del">DEL</button>
+   </div>
+   <div style="display:flex;gap:8px;margin-top:12px;">
+     <button id="export">Exportar CSV</button>
+     <button id="voice">🔊 Voz</button>
+   </div>
+ </div>
+ <h2>Historial</h2>
+ <div class="section table-wrap">
+   <table id="tbl">
+     <thead><tr><th>#</th><th>Expresión</th><th>Resultado</th><th>Tipo</th></tr></thead>
+     <tbody></tbody>
+   </table>
+ </div>
+</section>
+</main>
+
+<script>
+const display=document.getElementById('display');
+const msg=document.getElementById('msg');
+const tbl=document.querySelector('#tbl tbody');
+let expression="";
+let voiceEnabled=false;
+
+// Insertar caracteres
+function insert(v){expression+=v;display.value=expression;}
+// Borrar último
+function del(){expression=expression.slice(0,-1);display.value=expression;}
+// Limpiar
+function clearAll(){expression="";display.value="";msg.innerHTML="🧠 Limpio. Escribe o pulsa un botón.";}
+// Calcular
+function calc(){
+ try{
+   let exp=expression.replace(/√/g,"sqrt");
+   const result=math.evaluate(exp);
+   const type=math.typeOf(result);
+   display.value=result;
+   msg.innerHTML=`✨ <b>${expression}</b> = <b>${result}</b>`;
+   addRow(expression,result,type);
+   expression=""+result;
+   if(voiceEnabled) speak(`El resultado es ${result}`);
+ }catch(e){msg.innerHTML="💥 Error: "+e.message;}
+}
+// Agregar al historial
+function addRow(expr,res,t){
+ const tr=document.createElement("tr");
+ tr.innerHTML=`<td>${tbl.children.length+1}</td><td>${expr}</td><td>${res}</td><td>${t}</td>`;
+ tbl.prepend(tr);
+}
+// Exportar CSV
+document.getElementById("export").onclick=()=>{
+ if(tbl.children.length===0){alert("No hay datos para exportar.");return;}
+ const lines=["#,Expresión,Resultado,Tipo"];
+ Array.from(tbl.children).forEach((r,i)=>lines.push(Array.from(r.children).map(td=>td.textContent).join(",")));
+ const blob=new Blob([lines.join("\n")],{type:"text/csv"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="einstein_historial.csv";a.click();
+};
+// Botones
+document.querySelectorAll(".grid-btns button").forEach(b=>{
+ if(b.id==="clear") b.onclick=clearAll;
+ else if(b.classList.contains("eq")) b.onclick=calc;
+ else if(b.id==="del") b.onclick=del;
+ else b.onclick=()=>insert(b.textContent);
+});
+// Voz
+document.getElementById("voice").onclick=()=>{
+ voiceEnabled=!voiceEnabled;
+ msg.textContent=voiceEnabled?"🔊 Voz activada":"🔇 Voz desactivada";
+};
+function speak(text){
+ const u=new SpeechSynthesisUtterance(text);
+ u.lang="es-ES";u.pitch=1;u.rate=1;speechSynthesis.speak(u);
+}
+// Soporte de teclado físico
+document.addEventListener("keydown",e=>{
+ const k=e.key;
+ if(/[0-9+\-*/.^()]/.test(k))insert(k);
+ else if(k==="Enter"){calc();}
+ else if(k==="Backspace"){del();}
+ else if(k==="Escape"){clearAll();}
+});
+</script>
+</body>
+</html>
+
+

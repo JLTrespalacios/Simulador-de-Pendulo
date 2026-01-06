@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador de Péndulo — ACA Final</title>
+
+  <!-- ✅ Vincular el archivo CSS dentro de la carpeta "css" -->
+  <link rel="stylesheet" href="css/Simulador_Pendulo.css">
+</head>
+
+<body>
+  <header>
+    <div class="h-left">
+      <h1>ACA FINAL FÍSICA MECÁNICA Y LABORATORIO.</h1>
+      <p><b>José Leonardo Trespalacios Bedoya</b></p>
+      <p>Corporación Unificada Nacional de Educación Superior · Ingeniería en Sistemas</p>
+      <p>Física Mecánica y Laboratorio · Noviembre 08 de 2025</p>
+    </div>
+    <span class="badge">Simulador de Péndulo Simple</span>
+  </header>
+
+  <main>
+    <!-- Escena del péndulo -->
+    <section class="card">
+      <h2>Escena</h2>
+      <div class="section stage">
+        <canvas id="view" width="980" height="560"></canvas>
+        <div class="timer">Tiempo: <span id="timerDisp">0.00</span> s</div>
+        <div id="equilibrium" class="equilibrium hidden">
+          <div class="msg">🧘‍♂️ El péndulo ha llegado al equilibrio</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Controles del experimento -->
+    <section class="card">
+      <h2>Controles del experimento</h2>
+      <div class="section">
+        <div class="grid">
+          <div class="ctl"><label>Longitud L (m)</label><input id="L" type="number" value="1" step="0.01" min="0.1" max="2.5"></div>
+          <div class="ctl"><label>Ángulo inicial (°)</label><input id="theta0" type="number" value="30" min="1" max="60" step="0.5"></div>
+          <div class="ctl"><label>Gravedad g (m/s²)</label><input id="g" type="number" value="9.81" min="1" max="30" step="0.01"></div>
+          <div class="ctl"><label>Duración de simulación (s)</label><input id="simDuration" type="number" value="60" min="10" max="300" step="10"></div>
+          <div class="ctl"><label>Rozamiento aire (b)</label><input id="b" type="number" value="0.015" min="0" max="0.1" step="0.005"></div>
+          <div class="ctl"><label>Fricción del pivote β (s⁻¹)</label><input id="beta" type="number" value="0.01" min="0" max="0.05" step="0.001"></div>
+        </div>
+
+        <div class="grid" style="margin-top:10px">
+          <button class="primary" id="btnStart">Iniciar</button>
+          <button id="btnPause">Pausar</button>
+          <button id="btnReset">Reiniciar</button>
+          <button id="btnExport">Exportar CSV</button>
+        </div>
+
+        <div class="grid-3" style="margin-top:12px">
+          <div class="pill"><b>Período T (s)</b><span id="Tdisp">—</span></div>
+          <div class="pill"><b>T² (s²)</b><span id="T2disp">—</span></div>
+          <div class="pill"><b>Oscilaciones</b><span id="Ndisp">0</span></div>
+        </div>
+      </div>
+
+      <h2>Fuerza resultante</h2>
+      <div class="section">
+        <div class="pill" style="margin-bottom:10px;"><b>Fuerza neta (N)</b><span id="Fval">—</span></div>
+        <div style="background:#1e293b;border-radius:8px;height:14px;width:100%;overflow:hidden;">
+          <div id="Fbar" style="height:14px;background:#38bdf8;width:0%;transition:width 0.1s linear;"></div>
+        </div>
+      </div>
+
+      <h2>Energía total del sistema</h2>
+      <div class="section">
+        <div class="pill" style="margin-bottom:10px;"><b>Energía total (J)</b><span id="Edisp">—</span></div>
+        <div style="background:#1e293b;border-radius:8px;height:14px;width:100%;overflow:hidden;">
+          <div id="Ebar" style="height:14px;background:linear-gradient(90deg,#38bdf8,#34d399,#f59e0b,#ef4444);width:100%;transition:width 0.2s linear;"></div>
+        </div>
+        <div class="tiny">La energía total disminuye por fricción del pivote y del aire.</div>
+      </div>
+
+      <h2>Datos y estimación de g</h2>
+      <div class="section">
+        <div style="overflow:auto;max-height:220px">
+          <table id="tbl">
+            <thead><tr><th>#</th><th>L (m)</th><th>T (s)</th><th>T² (s²)</th><th>Tiempo (s)</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="grid-3" style="margin-top:8px">
+          <div class="pill"><b>Pendiente m</b><span id="mDisp">—</span></div>
+          <div class="pill"><b>g experimental</b><span id="gFit">—</span></div>
+          <div class="pill"><b>Error %</b><span id="err">—</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ✅ Vincular el archivo JavaScript dentro de la carpeta "js" -->
+  <script src="js/Simulador_pendulo.js"></script>
+</body>
+</html>
+
+

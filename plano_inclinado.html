@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ACA — Plano Inclinado con Rozamiento</title>
+  <style>
+:root{
+ --bg:#0b1220; --panel:#0e172a; --muted:#475569; --card:#0c1628;
+ --accent:#22d3ee; --accent-2:#38bdf8; --text:#e5e7eb;
+ --ok:#34d399; --warn:#f59e0b; --err:#ef4444; --border:#1f2937;
+}
+*{box-sizing:border-box;}
+body{
+ margin:0; font-family:"Inter",system-ui,sans-serif;
+ background:radial-gradient(120% 120% at 10% -10%,#0a1022,#0b1220 60%);
+ color:var(--text);
+}
+header{
+ padding:20px 24px; border-bottom:1px solid var(--border);
+ display:flex; align-items:center; justify-content:space-between;
+ background:rgba(7,12,24,.7); backdrop-filter:blur(6px);
+}
+.h-left h1{font-size:22px;color:var(--accent-2);margin:0}
+.h-left p{margin:2px 0;font-size:13px;color:#cbd5e1}
+.badge{font-size:12px;border:1px solid var(--border);padding:6px 10px;border-radius:999px;}
+main{display:grid;grid-template-columns:1.25fr .95fr;gap:18px;padding:18px;}
+@media(max-width:1080px){main{grid-template-columns:1fr;}}
+.card{
+ background:linear-gradient(180deg,var(--card),#0a1222 60%);
+ border:1px solid var(--border);border-radius:18px;
+ box-shadow:0 10px 30px rgba(0,0,0,.35);overflow:hidden;
+}
+.card h2{margin:0;padding:16px 18px;border-bottom:1px solid var(--border);font-size:18px;}
+.section{padding:16px 18px}
+.stage{position:relative;height:560px;display:grid;place-items:center}
+canvas{width:100%;height:100%;background:radial-gradient(60% 90% at 50% 100%,rgba(56,189,248,.08),transparent 45%)}
+.timer{position:absolute;top:12px;right:18px;background:rgba(0,0,0,.45);padding:6px 12px;border-radius:10px;font-size:14px;color:#bfeafe}
+.equilibrium{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.equilibrium .msg{background:rgba(17,24,39,.85);border:1px solid var(--border);padding:10px 14px;border-radius:12px;color:#d1fae5}
+.equilibrium.hidden{display:none}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ctl{padding:12px;border:1px solid var(--border);border-radius:12px;background:#0a1220}
+label{font-size:12px;color:#a3a3a3;display:block;margin-bottom:6px}
+input{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:#0a1220;color:var(--text)}
+button{border:1px solid var(--border);background:#0c1628;color:var(--text);padding:10px 14px;border-radius:10px;cursor:pointer}
+button.primary{background:linear-gradient(180deg,#0b2a30,#07222a)}
+table{width:100%;border-collapse:collapse;font-size:13px;text-align:center}
+th,td{border-bottom:1px solid var(--border);padding:8px}
+th{color:#9ca3af}
+.pill{border:1px solid var(--border);background:#0a1220;border-radius:10px;padding:10px;text-align:center}
+.pill b{display:block;font-size:13px}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.err{color:var(--err)}
+.tiny{font-size:12px;color:#94a3b8;margin-top:6px}
+  </style>
+</head>
+<body>
+<header>
+  <div class="h-left">
+    <h1>ACA FINAL FÍSICA MECÁNICA Y LABORATORIO.</h1>
+    <p><b>José Leonardo Trespalacios Bedoya</b></p>
+    <p>Corporación Unificada Nacional de Educación Superior · Ingeniería en Sistemas</p>
+    <p>Física Mecánica y Laboratorio · Noviembre 2025</p>
+  </div>
+  <span class="badge">Plano Inclinado con Rozamiento</span>
+</header>
+
+<main>
+<section class="card">
+ <h2>Escena</h2>
+ <div class="section stage">
+  <canvas id="view" width="980" height="560"></canvas>
+  <div class="timer">Tiempo: <span id="timerDisp">0.00</span> s</div>
+  <div id="equilibrium" class="equilibrium hidden">
+    <div class="msg">🧘‍♂️ El bloque está en reposo</div>
+  </div>
+ </div>
+</section>
+
+<section class="card">
+ <h2>Controles del experimento</h2>
+ <div class="section">
+  <div class="grid">
+    <div class="ctl"><label>Ángulo θ (°)</label><input id="theta" type="number" value="25" min="0" max="60" step="0.5"></div>
+    <div class="ctl"><label>Coef. fricción μ</label><input id="mu" type="number" value="0.15" min="0" max="1" step="0.01"></div>
+    <div class="ctl"><label>Masa m (kg)</label><input id="m" type="number" value="1.0" min="0.1" max="50" step="0.1"></div>
+    <div class="ctl"><label>Gravedad g (m/s²)</label><input id="g" type="number" value="9.81" min="1" max="30" step="0.01"></div>
+    <div class="ctl"><label>Duración (s)</label><input id="simDuration" type="number" value="30" min="5" max="300" step="5"></div>
+    <div class="ctl"><label>Resistencia del aire k (kg/s)</label><input id="k" type="number" value="0.00" min="0" max="2" step="0.05"></div>
+  </div>
+
+  <div class="grid" style="margin-top:10px">
+    <button class="primary" id="btnStart">Iniciar</button>
+    <button id="btnPause">Pausar</button>
+    <button id="btnReset">Reiniciar</button>
+    <button id="btnExport">Exportar CSV</button>
+  </div>
+
+  <div class="grid-3" style="margin-top:12px">
+    <div class="pill"><b>Aceleración a (m/s²)</b><span id="Adisp">—</span></div>
+    <div class="pill"><b>Velocidad v (m/s)</b><span id="Vdisp">—</span></div>
+    <div class="pill"><b>Distancia x (m)</b><span id="Xdisp">—</span></div>
+  </div>
+ </div>
+
+ <h2>Fuerza resultante</h2>
+ <div class="section">
+  <div class="pill" style="margin-bottom:10px;"><b>Fuerza neta (N)</b><span id="Fval">—</span></div>
+  <div style="background:#1e293b;border-radius:8px;height:14px;width:100%;overflow:hidden;">
+    <div id="Fbar" style="height:14px;background:#38bdf8;width:0%;transition:width 0.1s linear;"></div>
+  </div>
+ </div>
+
+ <h2>Energía mecánica (relativa al inicio)</h2>
+ <div class="section">
+  <div class="pill" style="margin-bottom:10px;"><b>Energía (J)</b><span id="Edisp">—</span></div>
+  <div style="background:#1e293b;border-radius:8px;height:14px;width:100%;overflow:hidden;">
+    <div id="Ebar" style="height:14px;background:linear-gradient(90deg,#38bdf8,#34d399,#f59e0b,#ef4444);width:0%;transition:width 0.2s linear;"></div>
+  </div>
+  <div class="tiny">Se muestra la energía mecánica relativa al punto de inicio (Ep + Ec).</div>
+ </div>
+
+ <h2>Datos</h2>
+ <div class="section">
+  <div style="overflow:auto;max-height:220px">
+   <table id="tbl">
+    <thead>
+     <tr><th>#</th><th>θ (°)</th><th>μ</th><th>a (m/s²)</th><th>v (m/s)</th><th>x (m)</th><th>t (s)</th></tr>
+    </thead>
+    <tbody></tbody>
+   </table>
+  </div>
+ </div>
+</section>
+</main>
+
+<script>
+const canvas=document.getElementById('view'),ctx=canvas.getContext('2d');
+const timerDisp=document.getElementById('timerDisp'),eqMsg=document.getElementById('equilibrium');
+const elTheta=document.getElementById('theta'),elMu=document.getElementById('mu'),elM=document.getElementById('m'),
+elG=document.getElementById('g'),elK=document.getElementById('k'),elSimDur=document.getElementById('simDuration');
+const Adisp=document.getElementById('Adisp'),Vdisp=document.getElementById('Vdisp'),Xdisp=document.getElementById('Xdisp');
+const Fval=document.getElementById('Fval'),Fbar=document.getElementById('Fbar');
+const Edisp=document.getElementById('Edisp'),Ebar=document.getElementById('Ebar');
+const tbody=document.querySelector('#tbl tbody');
+let running=false,lastTime=0,simTime=0;
+let theta=25*Math.PI/180,mu=0.15,m=1.0,g=9.81,k=0.0,simDuration=30;
+let s=0,v=0,a=0,Eref=1;const pxPerM=120;let trail=[];
+function clamp(x,a,b){return Math.min(b,Math.max(a,x));}
+function readUI(){theta=clamp((parseFloat(elTheta.value)||25)*Math.PI/180,0,60*Math.PI/180);mu=clamp(parseFloat(elMu.value)||0.15,0,1);m=clamp(parseFloat(elM.value)||1.0,0.1,50);g=clamp(parseFloat(elG.value)||9.81,1,30);k=clamp(parseFloat(elK.value)||0.0,0,2);simDuration=clamp(parseFloat(elSimDur.value)||30,5,300);}
+function reset(){readUI();s=0;v=0;a=0;simTime=0;timerDisp.textContent='0.00';tbody.innerHTML='';Adisp.textContent='—';Vdisp.textContent='—';Xdisp.textContent='—';Fval.textContent='—';Fbar.style.width='0%';Edisp.textContent='—';Ebar.style.width='0%';eqMsg.classList.add('hidden');Eref=1;trail=[];draw();}
+function computeAcceleration(vLocal){const downslope=g*Math.sin(theta);const normal=g*Math.cos(theta);let fric=0;const eps=1e-4;if(Math.abs(vLocal)>eps){fric=mu*normal*Math.sign(vLocal);}else{if(downslope>mu*normal)fric=mu*normal;else fric=0;}const drag=k*vLocal;const Fnet=m*downslope-m*fric-drag*Math.sign(vLocal||1);return Fnet/m;}
+function update(dt){a=computeAcceleration(v);v+=a*dt;s+=v*dt;simTime+=dt;timerDisp.textContent=simTime.toFixed(2);const downslope=g*Math.sin(theta),normal=g*Math.cos(theta);if((Math.abs(v)<1e-3&&downslope<=mu*normal)||simTime>=simDuration){running=false;eqMsg.classList.remove('hidden');eqMsg.querySelector('.msg').textContent=simTime>=simDuration?`🧘‍♂️ Simulación finalizada (${simDuration}s)`:'🧘‍♂️ El bloque está en reposo';}
+Adisp.textContent=a.toFixed(3);Vdisp.textContent=v.toFixed(3);Xdisp.textContent=s.toFixed(3);const Fnet=m*g*Math.sin(theta)-mu*m*g*Math.cos(theta)-k*Math.abs(v);const Fpct=clamp(Math.abs(Fnet)/(m*g),0,1)*100;Fval.textContent=Fnet.toFixed(3)+' N';Fbar.style.width=Fpct+'%';const h=s*Math.sin(theta);const Ep=m*g*h;const Ec=0.5*m*v*v;const E=Ep+Ec;if(E>Eref)Eref=E;const Eratio=clamp(Eref?E/Eref:0,0,1);Edisp.textContent=E.toFixed(3)+' J';Ebar.style.width=(Eratio*100).toFixed(1)+'%';if(tbody.children.length===0||simTime-parseFloat(tbody.children[0].children[6].textContent)>=0.2)addRow(theta*180/Math.PI,mu,a,v,s,simTime);}
+function loop(ts){if(!running){draw();return;}if(!lastTime)lastTime=ts;const dt=Math.min(0.05,(ts-lastTime)/1000);lastTime=ts;let t=0,h=0.005;while(t<dt){const step=Math.min(h,dt-t);update(step);t+=step;}draw();requestAnimationFrame(loop);}
+function draw(){ctx.fillStyle="rgba(10,16,32,0.25)";ctx.fillRect(0,0,canvas.width,canvas.height);const cx=canvas.width/2,cy=canvas.height*0.75;const Lpix=Math.min(720,canvas.width-160);const ang=-theta;const x0=cx-Lpix/2,y0=cy,x1=cx+Lpix/2,y1=cy;const rot=(x,y)=>{const dx=x-cx,dy=y-cy;const xr=dx*Math.cos(ang)-dy*Math.sin(ang);const yr=dx*Math.sin(ang)+dy*Math.cos(ang);return{x:cx+xr,y:cy+yr};};const P0=rot(x0,y0),P1=rot(x1,y1);ctx.strokeStyle="#1f2a44";ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(P0.x,P0.y);ctx.lineTo(P1.x,P1.y);ctx.stroke();const sPix=clamp(s*pxPerM,0,Lpix-80);const B=rot(x0+sPix+40,y0);trail.push({x:B.x,y:B.y});if(trail.length>80)trail.shift();for(let i=0;i<trail.length-1;i++){const p1=trail[i],p2=trail[i+1],a=i/trail.length;ctx.strokeStyle=`rgba(56,189,248,${a*0.6})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();}ctx.save();ctx.translate(B.x,B.y);ctx.rotate(ang);const w=64,hb=40;ctx.shadowBlur=Math.min(Math.abs(v)*10,20);ctx.shadowColor="rgba(56,189,248,0.9)";ctx.fillStyle="#0c1628";ctx.strokeStyle="#38bdf8";ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(-w/2,-hb/2,w,hb,8);ctx.fill();ctx.stroke();ctx.restore();ctx.fillStyle="rgba(0,0,0,0.25)";ctx.beginPath();ctx.ellipse(B.x,B.y+16,28,8,0,0,Math.PI*2);ctx.fill();}
+function addRow(thetaDeg,mu,a,v,x,t,prepend=true){const tr=document.createElement('tr');tr.innerHTML=`<td>${prepend?tbody.children.length+1:tbody.children.length+1}</td><td>${thetaDeg.toFixed(2)}</td><td>${mu.toFixed(2)}</td><td>${a.toFixed(3)}</td><td>${v.toFixed(3)}</td><td>${x.toFixed(3)}</td><td>${t.toFixed(2)}</td>`;if(prepend)tbody.prepend(tr);else tbody.appendChild(tr);}
+document.getElementById('btnExport').onclick=()=>{if(tbody.children.length===0){alert('No hay datos para exportar.');return;}const lines=['#,θ (°),μ,a (m/s^2),v (m/s),x (m),t (s)'];Array.from(tbody.children).forEach((r,i)=>{lines.push(`${i+1},${r.children[1].textContent},${r.children[2].textContent},${r.children[3].textContent},${r.children[4].textContent},${r.children[5].textContent},${r.children[6].textContent}`);});const blob=new Blob([lines.join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='plano_inclinado.csv';a.click();};
+document.getElementById('btnStart').onclick=()=>{if(!running){reset();running=true;requestAnimationFrame(loop);}};
+document.getElementById('btnPause').onclick=()=>{running=false;eqMsg.classList.add('hidden');};
+document.getElementById('btnReset').onclick=()=>{running=false;reset();};
+reset();draw();
+</script>
+</body>
+</html>
