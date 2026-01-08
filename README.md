@@ -15,3 +15,5 @@ Este proyecto es una suite de herramientas web interactivas para el aprendizaje 
    
    - Herramienta Matemática : Una calculadora científica completa (trigonometría, logaritmos, raíces) basada en la librería math.js .
    - Experiencia de Usuario : Cuenta con una interfaz temática "Einstein" que incluye efectos visuales y una función de texto a voz que lee los resultados de las operaciones.
+  
+https://simulador-pendulo.leonardotrespalacios.dev/
